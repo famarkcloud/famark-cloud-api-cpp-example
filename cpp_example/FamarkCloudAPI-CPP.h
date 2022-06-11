@@ -29,7 +29,7 @@ size_t read_callback(char* dest, size_t size, size_t nmemb, struct api_data_type
 
 void copy_to_api_data(char* source, size_t source_index, struct api_data_type* data_ptr, size_t data_index, size_t buffer_size) {
     char* tmp;
-    tmp = realloc(data_ptr->data, data_ptr->size + 1); /* +1 for '\0' */
+    tmp = (char*)realloc(data_ptr->data, data_ptr->size + 1); /* +1 for '\0' */
 
     if (tmp) {
         data_ptr->data = tmp;
@@ -39,7 +39,7 @@ void copy_to_api_data(char* source, size_t source_index, struct api_data_type* d
             free(data_ptr->data);
         }
         fprintf(stderr, "Failed to allocate memory.\n");
-        return 0;
+        return;
     }
 
     memcpy((data_ptr->data + data_index), &source[source_index], buffer_size);
@@ -78,7 +78,7 @@ size_t write_callback(char* source, size_t size, size_t nmemb, struct api_data_t
     return buffer_size;
 }
 
-char* famark_api_post_data(char* url_suffix, char* body, char* session_id) {
+char* famark_api_post_data(const char* url_suffix, char* body, const char* session_id) {
 
     char url[128] = "https://www.famark.com/host/api.svc/api";
     strcat_s(url, sizeof(url), url_suffix);
@@ -89,7 +89,7 @@ char* famark_api_post_data(char* url_suffix, char* body, char* session_id) {
 
     struct api_data_type response;
     response.size = 0;
-    response.data = malloc(8192); /* reasonable size initial buffer */
+    response.data = (char*)malloc(4096); /* reasonable size initial buffer */
     if (response.data == NULL) {
         fprintf(stderr, "Failed to allocate memory.\n");
         return NULL;
@@ -98,7 +98,7 @@ char* famark_api_post_data(char* url_suffix, char* body, char* session_id) {
 
     struct api_data_type error_header;
     error_header.size = 0;
-    error_header.data = malloc(2048); /* reasonable size initial buffer */
+    error_header.data = (char*)malloc(2048); /* reasonable size initial buffer */
     if (error_header.data == NULL) {
         fprintf(stderr, "Failed to allocate memory.\n");
         return NULL;

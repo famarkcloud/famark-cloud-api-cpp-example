@@ -1,1 +1,8 @@
 ﻿/.vs
+/Debug
+/Release
+/x64
+/cpp_example/Debug
+/cpp_example/Release
+/cpp_example/x64
+/cpp_example/*.vcxproj.user
