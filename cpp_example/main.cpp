@@ -4,10 +4,12 @@
 
 int main()
 {
+    FamarkCloudAPI cloudAPI;
+
     char credentialData[] = "{\"DomainName\": \"Famarker\", \"UserName\": \"TestUser1\", \"Password\": \"********\"}";
     
     //Connect action call
-	char* sessionData = famark_api_post_data("/Credential/Connect", credentialData, NULL);
+	char* sessionData = cloudAPI.post_data("/Credential/Connect", credentialData, NULL);
     
     struct json_object* sessionObject = json_tokener_parse(sessionData);
     const char* sessionId = json_object_get_string(sessionObject);
@@ -22,7 +24,7 @@ int main()
     char profileData[] = "{\"DisplayName\": \"Project Manager\", \"SystemName\": \"ProjectManager\"}";
     
     //Calling CreateRecord action on System_Profile entity of System solution
-    char* recordData = famark_api_post_data("/System_Profile/CreateRecord", profileData, sessionId);
+    char* recordData = cloudAPI.post_data("/System_Profile/CreateRecord", profileData, sessionId);
 
     struct json_object* recordObject = json_tokener_parse(recordData);
     const char* recordId = json_object_get_string(recordObject);
