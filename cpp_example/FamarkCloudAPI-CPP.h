@@ -13,7 +13,7 @@ class FamarkCloudAPI {
     CURL* curl;
     CURLcode res;
 
-private: 
+private:
     static size_t read_callback(char* dest, size_t size, size_t nmemb, struct api_data_type* request_ptr) {
         size_t buffer_size = (size * nmemb);
 
@@ -83,6 +83,15 @@ private:
         return buffer_size;
     }
 
+    static char* convertToCharArray(std::string text)
+    {
+        int len2 = text.length();
+        char* data2Array = new char[len2 + 1];
+        std::copy(text.begin(), text.end(), data2Array);
+        data2Array[len2] = '\0';
+        return data2Array;
+    }
+
 public:
     //Constructor
     FamarkCloudAPI() {
@@ -97,13 +106,14 @@ public:
         curl = curl_easy_init();
     }
 
-    char* post_data(const char* url_suffix, char* body, const char* session_id) {
+    char* post_data(const char* url_suffix, std::string body, const char* session_id) {
         char url[128] = "https://www.famark.com/host/api.svc/api";
         strcat_s(url, sizeof(url), url_suffix);
 
         struct api_data_type request;
-        request.data = body;
-        request.size = strlen(body);
+        char* bodyData = convertToCharArray(body);
+        request.data = bodyData;
+        request.size = strlen(bodyData);
 
         struct api_data_type response;
         response.size = 0;
