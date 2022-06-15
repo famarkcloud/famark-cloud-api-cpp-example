@@ -106,10 +106,8 @@ public:
         curl = curl_easy_init();
     }
 
-    std::string post_data(const char* url_suffix, std::string body, const std::string session_id) {
-        char url[128] = "https://www.famark.com/host/api.svc/api";
-        strcat_s(url, sizeof(url), url_suffix);
-
+    std::string post_data(const std::string url_suffix, const std::string body, const std::string session_id) {
+        char* url = convertToCharArray("https://www.famark.com/host/api.svc/api" + url_suffix);
         struct api_data_type request;
         char* bodyData = convertToCharArray(body);
         request.data = bodyData;
@@ -120,7 +118,7 @@ public:
         response.data = (char*)malloc(4096); /* reasonable size initial buffer */
         if (response.data == NULL) {
             fprintf(stderr, "Failed to allocate memory.\n");
-            return NULL;
+            return "";
         }
         response.data[0] = '\0';
 
@@ -129,7 +127,7 @@ public:
         error_header.data = (char*)malloc(2048); /* reasonable size initial buffer */
         if (error_header.data == NULL) {
             fprintf(stderr, "Failed to allocate memory.\n");
-            return NULL;
+            return "";
         }
         error_header.data[0] = '\0';
 
