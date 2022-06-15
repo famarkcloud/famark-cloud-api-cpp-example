@@ -106,7 +106,7 @@ public:
         curl = curl_easy_init();
     }
 
-    char* post_data(const char* url_suffix, std::string body, const char* session_id) {
+    std::string post_data(const char* url_suffix, std::string body, const std::string session_id) {
         char url[128] = "https://www.famark.com/host/api.svc/api";
         strcat_s(url, sizeof(url), url_suffix);
 
@@ -144,10 +144,9 @@ public:
         hs = curl_slist_append(hs, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hs);
 
-        if (session_id) {
+        if (!session_id.empty()) {
             struct curl_slist* sid = NULL;
-            char sid_header[1024] = "SessionId: ";
-            strcat_s(sid_header, sizeof(sid_header), session_id);
+            char* sid_header = convertToCharArray("SessionId: " + session_id);
             sid = curl_slist_append(sid, sid_header);
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, sid);
         }
@@ -172,7 +171,8 @@ public:
         }
 
         free(error_header.data);
-        return response.data;
+        std::string responseText(response.data, response.size);
+        return responseText;
     }
 
     //Destructor

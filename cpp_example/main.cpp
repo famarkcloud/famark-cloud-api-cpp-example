@@ -2,7 +2,7 @@
 #include <string>
 #include <stdio.h>
 #include "FamarkCloudAPI-CPP.h"
-#include <json-c/json.h>
+#include <json/json.h>
 using namespace std;
 
 int main()
@@ -18,20 +18,33 @@ int main()
     cout << "Enter Password: \n";
     cin >> password;
 
-    string credentialData = "{\"DomainName\": \"" + domainName + "\", \"UserName\": \"" + userName + "\", \"Password\": \"" + password + "\"}";
+    Json::Value credData;
+    credData["DomainName"] = domainName;
+    credData["UserName"] = userName;
+    credData["Password"] = password;
 
     //Connect action call
-    char* sessionData = cloudAPI.post_data("/Credential/Connect", credentialData, NULL);
-    struct json_object* sessionObject = json_tokener_parse(sessionData);
-    const char* sessionId = json_object_get_string(sessionObject);
+    const string sessionData = cloudAPI.post_data("/Credential/Connect", credData.toStyledString(), "");
 
-    if (sessionId) {
+    Json::Reader reader;
+    Json::Value responseJson;
+
+    // Parse JSON and print errors if needed
+    if (!reader.parse(sessionData, responseJson)) {
+        cout << reader.getFormattedErrorMessages();
+        return -1;
+    }
+
+    const string sessionId = responseJson.asString();
+
+    if (!sessionId.empty()) {
         cout << "Session Id: \n" << sessionId;
     }
     else {
         return -1;
     }
 
+    Json::Value profileData;
     // Creating records by taking input from user
     char userResponse;
     cout << "\nDo you want to create a new record (y/n): \n";
@@ -45,16 +58,21 @@ int main()
         getline(cin, displayName);
         cout << "Enter System Name: \n";
         getline(cin, systemName);
-        string profileData = "{\"DisplayName\": \"" + displayName + "\", \"SystemName\": \"" + systemName + "\"}";
+
+        profileData["DisplayName"] = displayName;
+        profileData["SystemName"] = systemName;
 
         //Calling CreateRecord action on System_Profile entity of System solution
-        char* recordData = cloudAPI.post_data("/System_Profile/CreateRecord", profileData, sessionId);
+        string recordData = cloudAPI.post_data("/System_Profile/CreateRecord", profileData.toStyledString(), sessionId);
 
-        struct json_object* recordObject = json_tokener_parse(recordData);
-        const char* recordId = json_object_get_string(recordObject);
-        free(recordData);
+        if (!reader.parse(recordData, responseJson)) {
+            cout << reader.getFormattedErrorMessages();
+            return -2;
+        }
 
-        if (recordId) {
+        const string recordId = responseJson.asString();
+
+        if (!recordId.empty()) {
             cout << "Created Record Id: \n" << recordId;
             //Login to your famark cloud domain to see the newly created record under System => Profile
             cout << "\nDo you want to create more System record (y/n)? \n";
@@ -66,21 +84,29 @@ int main()
     }
 
     //Calling RetrieveMultipleRecords action on the System_Profile entity
-    string retrieveRecords = "{\"Columns\": \"DisplayName, SystemName\"}";
-    char* records = cloudAPI.post_data("/System_Profile/RetrieveMultipleRecords", retrieveRecords, sessionId);
-    struct json_object* recordObjects = json_tokener_parse(records);
+    Json::Value retrieveRequest;
+    retrieveRequest["Columns"] = "DisplayName, SystemName";
+    retrieveRequest["OrderBy"] = "DisplayName";
+    const string records = cloudAPI.post_data("/System_Profile/RetrieveMultipleRecords", retrieveRequest.toStyledString(), sessionId);
 
-    int numRecords = json_object_array_length(recordObjects);
-    cout << "\nNumber of Records = " << numRecords;
-    cout << "\nRecords present inside entity are: \n";
-    struct json_object* tmp;
-    for (int i = 0; i < numRecords; i++) {
-        // Set in tmp the json_object of the recordObjects array at index i
-        tmp = json_object_array_get_idx(recordObjects, i);
-        cout << "\n Record no.: " << i + 1 << " " << json_object_to_json_string(tmp);
+    Json::Value recordObjects;
+
+    if (!reader.parse(records, recordObjects)) {
+        cout << reader.getFormattedErrorMessages();
+        return -3;
     }
 
-    free(sessionData);
-    free(records);
+    int numRecords = recordObjects.size();
+    cout << "\nNumber of Records = " << numRecords;
+    cout << "\nRecords present inside entity are: \n";
+
+    Json::Value recordObject;
+
+    for (Json::Value::ArrayIndex i = 0; i < numRecords; i++) {
+        // Set in tmp the json_object of the recordObjects array at index i
+        recordObject = recordObjects[i];
+        cout << "\n Record no.: " << i + 1 << " " << recordObject.toStyledString();
+    }
+
     return 0;
 }
