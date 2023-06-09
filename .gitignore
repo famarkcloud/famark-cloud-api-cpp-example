@@ -6,3 +6,8 @@
 /cpp_example/Release
 /cpp_example/x64
 /cpp_example/*.vcxproj.user
+cpp_example/main.exe
+cpp_example/main.ilk
+cpp_example/main.obj
+cpp_example/main.pdb
+cpp_example/vc140.pdb
